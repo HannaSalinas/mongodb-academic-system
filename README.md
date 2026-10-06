@@ -47,10 +47,8 @@ ProyectoMongoDB/
 │   ├── 06_agregaciones.js            # Pipelines de agregación
 │   └── 07_changestreams.js           # Monitoreo de cambios
 ├── documentos/
-│   ├── Diseño Sistema Academico.pdf  # Documentación del diseño
-│   ├── Instalacion_MongoDB.pdf       # Guía de instalación
-│   └── Manual de Usuario.pdf         # Manual completo
-└── config.txt                        # Configuración de conexión
+│   └── Diseño Sistema Academico.pdf  # Documentación del diseño
+└── config.example.txt                # Plantilla de conexión (copiar a config.txt)
 ```
 
 ## 📚 Colecciones
@@ -112,48 +110,38 @@ ProyectoMongoDB/
 
 ## 🚀 Instalación y Uso
 
-### Prerequisitos
-- MongoDB 6.0 o superior
-- MongoDB Shell (mongosh)
-- Conexión a MongoDB Atlas (o instancia local)
+### Prerrequisitos
+- [MongoDB Shell (mongosh)](https://www.mongodb.com/docs/mongodb-shell/install/) 2.x
+- Un clúster de MongoDB Atlas (el nivel gratuito M0 es suficiente) o una instancia local de MongoDB 6.0+
+- En Atlas: un usuario de base de datos y tu IP agregada en *Network Access*
 
 ### Configuración
 
 1. **Clonar el repositorio:**
 ```bash
-git clone https://github.com/HannaSalinas/proyecto-mongodb-academico.git
-cd proyecto-mongodb-academico
+git clone https://github.com/HannaSalinas/mongodb-academic-system.git
+cd mongodb-academic-system
 ```
 
-2. **Configurar conexión:**
-Editar `config.txt` con tu cadena de conexión:
-```
-mongosh "mongodb+srv://tu-cluster.mongodb.net/" --username tu_usuario
-```
-
-3. **Ejecutar scripts en orden:**
+2. **Configurar la conexión:**
+Copia la plantilla y reemplaza `<tu_usuario>`, `<tu_contraseña>` y `<tu-cluster>` con los datos de tu clúster. `config.txt` está en `.gitignore`, así que tus credenciales no se suben al repositorio.
 ```bash
-# 1. Crear colecciones
-mongosh < scripts/01_creacion_colecciones.js
-
-# 2. Insertar datos de ejemplo
-mongosh < scripts/02_insercion_datos.js
-
-# 3. Probar validaciones
-mongosh < scripts/03_validaciones.js
-
-# 4. Ejecutar operaciones CRUD
-mongosh < scripts/04_crud.js
-
-# 5. Probar transacciones
-mongosh < scripts/05_transacciones.js
-
-# 6. Ejecutar agregaciones
-mongosh < scripts/06_agregaciones.js
-
-# 7. Monitorear cambios
-mongosh < scripts/07_changestreams.js
+cp config.example.txt config.txt
+source config.txt
 ```
+
+3. **Ejecutar los scripts en orden (01 → 07):**
+```bash
+mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/01_creacion_colecciones.js  # Crear colecciones
+mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/02_insercion_datos.js       # Insertar datos de ejemplo
+mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/03_validaciones.js          # Aplicar validaciones de esquema
+mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/04_crud.js                  # Operaciones CRUD
+mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/05_transacciones.js         # Transacciones
+mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/06_agregaciones.js          # Reportes y agregaciones
+mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/07_changestreams.js         # Change Streams
+```
+
+Para una instancia local, usa `MONGODB_URI="mongodb://localhost:27017/sistema_academico"`. Los resultados se pueden revisar con MongoDB Compass.
 
 ## 💡 Ejemplos de Uso
 
@@ -220,11 +208,8 @@ Monitoreo en tiempo real de:
 
 ## 📖 Documentación
 
-Ver la carpeta `documentos/` para:
-- Manual de Usuario completo
-- Guía de instalación detallada
-- Diagrama del sistema académico
-- Casos de uso y ejemplos
+- `documentos/Diseño Sistema Academico.pdf`: diseño del modelo de datos del sistema.
+- La guía de instalación y el manual de uso están en la sección **Instalación y Uso** de este README.
 
 ## 🛠️ Tecnologías Utilizadas
 
@@ -240,7 +225,7 @@ Ver la carpeta `documentos/` para:
 - Estudiante de Ingeniería de Software y Datos
 - Email: salinashanna123@gmail.com
 - GitHub: [@HannaSalinas](https://github.com/HannaSalinas)
-- Portfolio: [hannasalinas.github.io](https://hannasalinas.github.io/Hanna-Salinas-Software-and-Data-Engineer-Portfolio/)
+- Portfolio: [hannasalinas.github.io](https://hannasalinas.github.io/)
 
 ## 📄 Licencia
 
