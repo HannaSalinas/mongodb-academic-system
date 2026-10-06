@@ -6,13 +6,12 @@
 
 use("sistema_academico");
 
-const session = db.getMongo().startSession();
-
 // ============================================
 // 🧩 1️⃣ Inscripción de estudiante en múltiples materias
 // ============================================
 
 function inscribirEstudianteEnMaterias(estudianteId, materiasIds) {
+  const session = db.getMongo().startSession();
   session.startTransaction();
   try {
     const estudiante = db.estudiantes.findOne({ _id: estudianteId });
@@ -23,8 +22,8 @@ function inscribirEstudianteEnMaterias(estudianteId, materiasIds) {
       materia_id: id,
       periodo: "2024-2",
       fecha_inscripcion: new Date(),
-      estado: "Inscrito",
-      nota_final: null
+      // nota_final se omite hasta que exista: el esquema exige un double
+      estado: "Inscrito"
     }));
 
     session.getDatabase("sistema_academico").inscripciones.insertMany(inscripciones);
@@ -56,7 +55,8 @@ function registrarCalificacionesYActualizarPromedio(estudianteId, calificaciones
         .getDatabase("sistema_academico")
         .inscripciones.updateOne(
           { estudiante_id: estudianteId, materia_id },
-          { $set: { nota_final: nota, estado: nota >= 3.0 ? "Aprobado" : "Reprobado" } }
+          // Double(): mongosh guarda 4.0 como entero y el esquema exige double
+          { $set: { nota_final: Double(nota), estado: nota >= 3.0 ? "Aprobado" : "Reprobado" } }
         );
       total += nota;
       count++;
