@@ -1,53 +1,41 @@
-# 🎓 Sistema Académico - MongoDB
+# 🎓 Sistema Académico en MongoDB
 
-Sistema completo de gestión académica desarrollado con MongoDB, implementando validación de esquemas, operaciones CRUD avanzadas, transacciones y agregaciones complejas.
+Base de datos NoSQL para la gestión académica de una universidad: estudiantes, profesores, materias, programas e inscripciones, con validación de esquemas, operaciones CRUD, transacciones multi-documento y reportes con el Aggregation Framework.
 
-## 📋 Descripción
+**Proyecto académico** del curso de Bases de Datos NoSQL (IU Digital de Antioquia). Desarrollado sobre MongoDB Atlas 8.0 y verificado con mongosh 2.x en un replica set local.
 
-Este proyecto implementa un sistema de gestión académica completo utilizando MongoDB como base de datos NoSQL. El sistema maneja estudiantes, profesores, materias, programas académicos e inscripciones con validaciones robustas y operaciones avanzadas.
+## ✨ Qué incluye
 
-## ✨ Características Principales
+| Script | Qué hace | Estado |
+|---|---|---|
+| `01_creacion_colecciones.js` | Crea 5 colecciones con validación `$jsonSchema` (borra las existentes antes) | ✅ |
+| `02_insercion_datos.js` | Inserta datos de ejemplo: 5 programas y 20 documentos en cada una de las demás colecciones | ✅ |
+| `03_validaciones.js` | Refuerza las reglas de esquema: formato de email, rangos de notas y semestres, estados válidos | ✅ |
+| `04_crud.js` | Funciones de creación, consulta, actualización y eliminación | ✅ |
+| `05_transacciones.js` | 4 transacciones multi-documento con *rollback* | ✅ |
+| `06_agregaciones.js` | 5 reportes con pipelines de agregación y `$lookup` | ✅ |
+| `07_changestreams.js` | Define los pipelines de 5 Change Streams (auditoría, riesgo académico, créditos, cupos, notas) | 🚧 En desarrollo: los pipelines están definidos, falta suscribirse con `watch()` |
 
-### 🔐 Validación de Esquemas JSON
-- Validación automática de datos con JSON Schema
-- Tipos de datos estrictos y validaciones personalizadas
-- Prevención de datos inconsistentes
+### Transacciones (`05_transacciones.js`)
+- `inscribirEstudianteEnMaterias(estudianteId, materiasIds)`: inscribe en varias materias de forma atómica.
+- `registrarCalificacionesYActualizarPromedio(estudianteId, calificaciones)`: registra notas, marca Aprobado/Reprobado y recalcula el promedio.
+- `retirarMateria(estudianteId, materiaId)`: marca la inscripción como Retirado.
+- `graduarEstudiante(estudianteId)`: gradúa solo si no quedan materias pendientes; si las hay, hace *rollback*.
 
-### 📊 Operaciones CRUD Completas
-- Crear, leer, actualizar y eliminar registros
-- Funciones reutilizables y optimizadas
-- Manejo de errores y validaciones
+### Reportes (`06_agregaciones.js`)
+- `promedioPorMateria()`
+- `estudiantesEnRiesgo()`: promedio acumulado menor a 3.0 y estado Activo.
+- `materiasMasReprobadas()`
+- `cargaProfesoresPorPeriodo(periodo)`: cursos y créditos asignados por profesor.
+- `estadisticasGraduacionPorPrograma()`
 
-### 🔄 Transacciones
-- Operaciones atómicas multi-documento
-- Garantía de consistencia de datos
-- Rollback automático en caso de error
-
-### 📈 Agregaciones Avanzadas
-- Pipelines complejos de agregación
-- Análisis de datos académicos
-- Reportes estadísticos
-- Cálculo de promedios y métricas
-
-### 🔔 Change Streams
-- Monitoreo de cambios en tiempo real
-- Auditoría de modificaciones
-- Notificaciones de eventos
-
-## 🗂️ Estructura del Proyecto
+## 🗂️ Estructura del proyecto
 
 ```
-ProyectoMongoDB/
-├── scripts/
-│   ├── 01_creacion_colecciones.js    # Creación de colecciones con validación
-│   ├── 02_insercion_datos.js         # Datos de ejemplo
-│   ├── 03_validaciones.js            # Pruebas de validación
-│   ├── 04_crud.js                    # Operaciones CRUD
-│   ├── 05_transacciones.js           # Transacciones multi-documento
-│   ├── 06_agregaciones.js            # Pipelines de agregación
-│   └── 07_changestreams.js           # Monitoreo de cambios
+mongodb-academic-system/
+├── scripts/                          # 01 → 07, en orden de ejecución
 ├── documentos/
-│   └── Diseño Sistema Academico.pdf  # Documentación del diseño
+│   └── Diseño Sistema Academico.pdf  # Diseño del modelo de datos
 └── config.example.txt                # Plantilla de conexión (copiar a config.txt)
 ```
 
@@ -108,116 +96,59 @@ ProyectoMongoDB/
 }
 ```
 
-## 🚀 Instalación y Uso
+## 🚀 Instalación y uso
 
 ### Prerrequisitos
 - [MongoDB Shell (mongosh)](https://www.mongodb.com/docs/mongodb-shell/install/) 2.x
-- Un clúster de MongoDB Atlas (el nivel gratuito M0 es suficiente) o una instancia local de MongoDB 6.0+
-- En Atlas: un usuario de base de datos y tu IP agregada en *Network Access*
+- MongoDB en **replica set**, necesario para las transacciones. Sirve un clúster gratuito M0 de MongoDB Atlas (con un usuario de base de datos y tu IP en *Network Access*) o una instancia local (ver abajo).
 
-### Configuración
-
-1. **Clonar el repositorio:**
+### 1. Clonar y configurar la conexión
 ```bash
 git clone https://github.com/HannaSalinas/mongodb-academic-system.git
 cd mongodb-academic-system
-```
-
-2. **Configurar la conexión:**
-Copia la plantilla y reemplaza `<tu_usuario>`, `<tu_contraseña>` y `<tu-cluster>` con los datos de tu clúster. `config.txt` está en `.gitignore`, así que tus credenciales no se suben al repositorio.
-```bash
-cp config.example.txt config.txt
+cp config.example.txt config.txt   # edita <tu_usuario>, <tu_contraseña> y <tu-cluster>
 source config.txt
 ```
+`config.txt` está en `.gitignore`, así que tus credenciales no se suben al repositorio.
 
-3. **Ejecutar los scripts en orden (01 → 07):**
+**Opción local con Docker** (en lugar de Atlas):
 ```bash
-mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/01_creacion_colecciones.js  # Crear colecciones
-mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/02_insercion_datos.js       # Insertar datos de ejemplo
-mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/03_validaciones.js          # Aplicar validaciones de esquema
-mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/04_crud.js                  # Operaciones CRUD
-mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/05_transacciones.js         # Transacciones
-mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/06_agregaciones.js          # Reportes y agregaciones
-mongosh "$MONGODB_URI" --apiVersion 1 --file scripts/07_changestreams.js         # Change Streams
+docker run -d --name mongo-academico -p 27017:27017 mongo:7 --replSet rs0
+mongosh --quiet --eval 'rs.initiate()'
+export MONGODB_URI="mongodb://localhost:27017/sistema_academico?directConnection=true"
+```
+MongoDB 5.0+ requiere un procesador con AVX; en equipos sin AVX usa la imagen `mongo:4.4`.
+
+### 2. Ejecutar los scripts en orden (01 → 07)
+```bash
+for f in scripts/0*.js; do mongosh "$MONGODB_URI" --quiet --file "$f"; done
 ```
 
-Para una instancia local, usa `MONGODB_URI="mongodb://localhost:27017/sistema_academico"`. Los resultados se pueden revisar con MongoDB Compass.
-
-## 💡 Ejemplos de Uso
-
-### Crear un estudiante:
+### 3. Usar las funciones
+Los scripts 04, 05 y 06 definen funciones. Para usarlas, cárgalos en una sesión de mongosh:
 ```javascript
-db.estudiantes.insertOne({
-  codigo: "EST001",
-  nombre: "María García",
-  email: "maria.garcia@universidad.edu.co",
-  programa: { 
-    id: ObjectId(), 
-    nombre: "Ingeniería de Software" 
-  },
-  semestre_actual: 5,
-  promedio_acumulado: 4.2,
-  estado: "Activo"
-});
+// mongosh "$MONGODB_URI"
+load("scripts/06_agregaciones.js")
+estudiantesEnRiesgo()
+cargaProfesoresPorPeriodo("2024-2")
+
+load("scripts/05_transacciones.js")
+const est = db.estudiantes.findOne({ estado: "Activo" })
+const materias = db.materias.find().limit(3).toArray().map(m => m._id)
+inscribirEstudianteEnMaterias(est._id, materias)
 ```
 
-### Buscar estudiantes en riesgo académico:
-```javascript
-db.estudiantes.find({
-  promedio_acumulado: { $lt: 3.0 },
-  estado: "Activo"
-}).sort({ promedio_acumulado: 1 });
-```
+## 💡 Decisiones técnicas
 
-### Calcular promedio por materia (Agregación):
-```javascript
-db.matriculas.aggregate([
-  { $unwind: "$calificaciones" },
-  { 
-    $group: {
-      _id: "$calificaciones.materia_id",
-      promedio: { $avg: "$calificaciones.nota" },
-      total_estudiantes: { $sum: 1 }
-    }
-  },
-  { $sort: { promedio: -1 } }
-]);
-```
+- **Documentos con referencias y datos embebidos.** Estudiantes y materias guardan el `id` y el nombre del programa: las consultas frecuentes no necesitan `$lookup`, y los reportes sí lo usan cuando cruzan colecciones.
+- **Validación en la base de datos.** `$jsonSchema` impide datos inconsistentes (notas fuera de 0.0–5.0, estados no válidos, emails mal formados) sin importar desde qué cliente se escriba.
+- **Transacciones para operaciones que tocan varias colecciones.** Registrar notas y recalcular el promedio se hace todo o nada.
+- **Credenciales fuera del repositorio.** La conexión se lee de `config.txt`, que no se versiona.
 
-## 🎯 Funcionalidades Avanzadas
+## 🛠️ Tecnologías
 
-### Transacciones
-El sistema implementa transacciones para operaciones críticas como:
-- Inscripción de estudiantes (actualiza múltiples colecciones)
-- Cambio de estado académico
-- Asignación de materias a profesores
-
-### Agregaciones
-Incluye pipelines para:
-- Reporte de estudiantes en riesgo
-- Promedio de calificaciones por materia
-- Materias más reprobadas
-- Estadísticas por programa
-- Análisis de rendimiento académico
-
-### Change Streams
-Monitoreo en tiempo real de:
-- Nuevas inscripciones
-- Cambios en calificaciones
-- Actualizaciones de estado
-
-## 📖 Documentación
-
-- `documentos/Diseño Sistema Academico.pdf`: diseño del modelo de datos del sistema.
-- La guía de instalación y el manual de uso están en la sección **Instalación y Uso** de este README.
-
-## 🛠️ Tecnologías Utilizadas
-
-- **MongoDB 6.0+**: Base de datos NoSQL
-- **MongoDB Shell (mongosh)**: Interfaz de línea de comandos
-- **JSON Schema**: Validación de datos
-- **Aggregation Framework**: Análisis de datos
-- **Change Streams**: Monitoreo en tiempo real
+- **MongoDB** (Atlas 8.0; verificado también en 4.4 local) con JSON Schema, transacciones y Aggregation Framework
+- **mongosh** 2.x
 
 ## 👩‍💻 Autora
 
@@ -229,12 +160,4 @@ Monitoreo en tiempo real de:
 
 ## 📄 Licencia
 
-Este proyecto fue desarrollado con fines académicos.
-
-## 🙏 Agradecimientos
-
-Proyecto académico desarrollado como parte del curso de Bases de Datos NoSQL.
-
----
-
-**Desarrollado con ❤️ y MongoDB**
+[MIT](LICENSE)
