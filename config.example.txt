@@ -1,0 +1,1 @@
+MONGODB_URI="mongodb+srv://<tu_usuario>:<tu_contraseña>@<tu-cluster>.mongodb.net/sistema_academico"
