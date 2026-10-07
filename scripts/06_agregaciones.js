@@ -7,12 +7,12 @@
 // 1️⃣ Promedio de calificaciones por materia
 // ============================================
 function promedioPorMateria() {
-  return db.matriculas.aggregate([
-    { $unwind: "$calificaciones" },
+  return db.inscripciones.aggregate([
+    { $match: { nota_final: { $ne: null } } },
     {
       $group: {
-        _id: "$calificaciones.materia_id",
-        promedio_materia: { $avg: "$calificaciones.nota" },
+        _id: "$materia_id",
+        promedio_materia: { $avg: "$nota_final" },
         cantidad_estudiantes: { $sum: 1 }
       }
     },
@@ -67,12 +67,11 @@ function estudiantesEnRiesgo() {
 // 3️⃣ Materias más reprobadas
 // ============================================
 function materiasMasReprobadas() {
-  return db.matriculas.aggregate([
-    { $unwind: "$calificaciones" },
-    { $match: { "calificaciones.nota": { $lt: 3.0 } } },
+  return db.inscripciones.aggregate([
+    { $match: { estado: "Reprobado" } },
     {
       $group: {
-        _id: "$calificaciones.materia_id",
+        _id: "$materia_id",
         total_reprobados: { $sum: 1 }
       }
     },
@@ -100,28 +99,30 @@ function materiasMasReprobadas() {
 // 4️⃣ Carga académica de profesores por período
 // ============================================
 function cargaProfesoresPorPeriodo(periodo) {
-  return db.cursos.aggregate([
-    { $match: { periodo: periodo } },
-    {
-      $group: {
-        _id: "$profesor_id",
-        total_cursos: { $sum: 1 },
-        total_creditos: { $sum: "$creditos" }
-      }
-    },
+  return db.profesores.aggregate([
+    { $unwind: "$materias_asignadas" },
+    { $match: { "materias_asignadas.periodo": periodo } },
     {
       $lookup: {
-        from: "profesores",
-        localField: "_id",
+        from: "materias",
+        localField: "materias_asignadas.materia_id",
         foreignField: "_id",
-        as: "profesor"
+        as: "materia"
       }
     },
-    { $unwind: "$profesor" },
+    { $unwind: "$materia" },
+    {
+      $group: {
+        _id: "$_id",
+        nombre_profesor: { $first: "$nombre" },
+        total_cursos: { $sum: 1 },
+        total_creditos: { $sum: "$materia.creditos" }
+      }
+    },
     {
       $project: {
         _id: 0,
-        nombre_profesor: "$profesor.nombre",
+        nombre_profesor: 1,
         total_cursos: 1,
         total_creditos: 1
       }
@@ -137,7 +138,7 @@ function estadisticasGraduacionPorPrograma() {
   return db.estudiantes.aggregate([
     {
       $group: {
-        _id: "$programa_id",
+        _id: "$programa.id",
         total_estudiantes: { $sum: 1 },
         graduados: {
           $sum: { $cond: [{ $eq: ["$estado", "Graduado"] }, 1, 0] }
